@@ -1,0 +1,21 @@
+services:
+  vulnerable-daemon:
+    image: docker:27-dind
+    privileged: true            # dind needs this; it is simulating a real host's daemon
+    environment:
+      DOCKER_TLS_CERTDIR: ""    # the misconfiguration: TLS off...
+    command: ["dockerd", "--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock"]
+    networks: [lab]
+    # NOTE: 2375 is published only on the internal lab network, not to your host/LAN.
+
+  attacker:
+    build: ./attacker
+    depends_on: [vulnerable-daemon]
+    tty: true
+    stdin_open: true
+    networks: [lab]
+    command: ["sleep", "infinity"]
+
+networks:
+  lab:
+    driver: bridge
